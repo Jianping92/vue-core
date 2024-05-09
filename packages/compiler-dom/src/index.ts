@@ -37,6 +37,8 @@ export const DOMDirectiveTransforms: Record<string, DirectiveTransform> = {
   show: transformShow,
 }
 
+// 编译函数
+// 将字符串或根节点编译成代码生成结果
 export function compile(
   src: string | RootNode,
   options: CompilerOptions = {},

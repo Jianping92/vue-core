@@ -585,6 +585,9 @@ export const locStub: SourceLocation = {
   source: '',
 }
 
+// 创建一个根结点
+// children 表示子节点
+// source 表示源代码位置
 export function createRoot(
   children: TemplateChildNode[],
   source = '',

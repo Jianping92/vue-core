@@ -10,6 +10,9 @@ import { EMPTY_OBJ, extend, isArray, isFunction, isObject } from '@vue/shared'
 import type { ComponentInternalInstance, ComponentOptions } from './component'
 import type { ComponentPublicInstance } from './componentPublicInstance'
 
+/**
+ * 这里是关于devtools的格式化逻辑
+ * */
 export function initCustomFormatter() {
   /* eslint-disable no-restricted-globals */
   if (!__DEV__ || typeof window === 'undefined') {

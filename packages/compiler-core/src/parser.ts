@@ -1015,6 +1015,11 @@ function emitError(code: ErrorCodes, index: number, message?: string) {
   )
 }
 
+// 重置解析器的状态
+// 将tokenizer重置
+// 将currentOpenTag、currentProp和currentAttrValue设置为初始值
+// 将currentAttrStartIndex和currentAttrEndIndex设置为-1
+// 清空stack数组
 function reset() {
   tokenizer.reset()
   currentOpenTag = null
@@ -1025,11 +1030,15 @@ function reset() {
   stack.length = 0
 }
 
+// 将输入的字符串解析为一个根节点对象（RootNode）
 export function baseParse(input: string, options?: ParserOptions): RootNode {
+  // 初始化
   reset()
   currentInput = input
+  // 生成一个新默认解析器选项
   currentOptions = extend({}, defaultParserOptions)
 
+  // 如果传参中的options存在则将传入的数据过滤后赋值给currentOptions
   if (options) {
     let key: keyof ParserOptions
     for (key in options) {
@@ -1040,6 +1049,7 @@ export function baseParse(input: string, options?: ParserOptions): RootNode {
     }
   }
 
+  // 开发环境的一些警告
   if (__DEV__) {
     if (!__BROWSER__ && currentOptions.decodeEntities) {
       console.warn(
@@ -1053,6 +1063,7 @@ export function baseParse(input: string, options?: ParserOptions): RootNode {
     }
   }
 
+  // 设置模式，如果没有传入则默认为base
   tokenizer.mode =
     currentOptions.parseMode === 'html'
       ? ParseMode.HTML
@@ -1060,20 +1071,27 @@ export function baseParse(input: string, options?: ParserOptions): RootNode {
         ? ParseMode.SFC
         : ParseMode.BASE
 
+  // 设置是否在XML模式下解析
   tokenizer.inXML =
     currentOptions.ns === Namespaces.SVG ||
     currentOptions.ns === Namespaces.MATH_ML
 
+  // 设置新的分隔符，默认分隔符是 "{{" 和 "}}"
   const delimiters = options && options.delimiters
   if (delimiters) {
     tokenizer.delimiterOpen = toCharCodes(delimiters[0])
     tokenizer.delimiterClose = toCharCodes(delimiters[1])
   }
 
+  // 设置节点，
   const root = (currentRoot = createRoot([], input))
+  // 调用tokenizer.parse(currentInput)函数对输入的字符串进行解析，得到一个初始的语法树
   tokenizer.parse(currentInput)
+  // 设置语法树的loc属性，将其定位到输入字符串的起始位置到结束位置
   root.loc = getLoc(0, input.length)
+  // 调用condenseWhitespace(root.children)函数对语法树的子节点进行处理，合并相邻的空白节点
   root.children = condenseWhitespace(root.children)
+  // 将当前的语法树根节点root重置为null，以便下一次解析使用
   currentRoot = null
   return root
 }

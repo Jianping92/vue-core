@@ -62,33 +62,48 @@ export function getBaseTransformPreset(
 
 // we name it `baseCompile` so that higher order compilers like
 // @vue/compiler-dom can export `compile` while re-exporting everything else.
+// 基础编译器
 export function baseCompile(
   source: string | RootNode,
   options: CompilerOptions = {},
 ): CodegenResult {
+  // defaultOnError => throw error
   const onError = options.onError || defaultOnError
   const isModuleMode = options.mode === 'module'
   /* istanbul ignore if */
   if (__BROWSER__) {
+    // 在浏览器环境内
     if (options.prefixIdentifiers === true) {
+      // 如果存在 prefixIdentifiers（前缀标识符）则抛出错误：
+      // 此编译器版本不支持“prefixIdentifiers”选项。
       onError(createCompilerError(ErrorCodes.X_PREFIX_ID_NOT_SUPPORTED))
     } else if (isModuleMode) {
+      // 如果 options.mode 的值是 module 则抛出错误：
+      // 此编译器版本不支持 ES 模块模式。
       onError(createCompilerError(ErrorCodes.X_MODULE_MODE_NOT_SUPPORTED))
     }
   }
 
+  // 如果不在浏览器且options.mode为module或者options的prefixIdentifiers为true
+  // 则需要给标识符添加前缀
   const prefixIdentifiers =
     !__BROWSER__ && (options.prefixIdentifiers === true || isModuleMode)
   if (!prefixIdentifiers && options.cacheHandlers) {
+    // 如果prefixIdentifiers不为true且cacheHandlers为true时抛出错误：
+    // 仅当启用“prefixIdentifiers”选项时才支持“cacheHandlers”选项。
     onError(createCompilerError(ErrorCodes.X_CACHE_HANDLER_NOT_SUPPORTED))
   }
   if (options.scopeId && !isModuleMode) {
+    // 如果scopeId为true但不是module模式时抛出错误：
+    // “scopeId”选项仅在module模式下受支持。
     onError(createCompilerError(ErrorCodes.X_SCOPE_ID_NOT_SUPPORTED))
   }
 
+  // 将prefixIdentifiers与options合并
   const resolvedOptions = extend({}, options, {
     prefixIdentifiers,
   })
+  // 如果source是string类型，执行基础的解析器并将结果赋值给ast
   const ast = isString(source) ? baseParse(source, resolvedOptions) : source
   const [nodeTransforms, directiveTransforms] =
     getBaseTransformPreset(prefixIdentifiers)
