@@ -818,16 +818,22 @@ function isUpperCase(c: number) {
 }
 
 const windowsNewlineRE = /\r\n/g
+// 处理HTML模板中的空白字符，根据不同的条件进行压缩或删除
 function condenseWhitespace(
   nodes: TemplateChildNode[],
   tag?: string,
 ): TemplateChildNode[] {
+  // 根据currentOptions.whitespace的值判断是否应该压缩空白字符
   const shouldCondense = currentOptions.whitespace !== 'preserve'
   let removedWhitespace = false
+  // 遍历 node 节点
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i]
+    // 节点的类型为TEXT
     if (node.type === NodeTypes.TEXT) {
+      // inPre 是在 tokenizer.parse(currentInput) 的callbacks里面处理的
       if (!inPre) {
+        // 如果全空
         if (isAllWhitespace(node.content)) {
           const prev = nodes[i - 1] && nodes[i - 1].type
           const next = nodes[i + 1] && nodes[i + 1].type
@@ -836,6 +842,12 @@ function condenseWhitespace(
           // - (condense mode) the whitespace is between two comments, or:
           // - (condense mode) the whitespace is between comment and element, or:
           // - (condense mode) the whitespace is between two elements AND contains newline
+          // 如果出现以下情况，
+          // 请删除：
+          // - 空格是第一个或最后一个节点，
+          // 或者： - （压缩模式）空格位于两个注释之间，
+          // 或者： - （压缩模式）空格位于注释和元素之间，
+          // 或者： - （压缩模式）空格位于两个元素之间，并且包含换行符
           if (
             !prev ||
             !next ||
@@ -851,17 +863,21 @@ function condenseWhitespace(
             nodes[i] = null as any
           } else {
             // Otherwise, the whitespace is condensed into a single space
+            // 空格将压缩为单个空格
             node.content = ' '
           }
         } else if (shouldCondense) {
           // in condense mode, consecutive whitespaces in text are condensed
           // down to a single space.
+          // 在压缩模式下，文本中的连续空格被压缩为单个空格
           node.content = condense(node.content)
         }
       } else {
         // #6410 normalize windows newlines in <pre>:
         // in SSR, browsers normalize server-rendered \r\n into a single \n
         // in the DOM
+        // 规范化 Windows 换行符 <pre>：
+        // 在 SSR 中，浏览器将服务器呈现的 \r\n 规范化为 DOM 中的单个 \n
         node.content = node.content.replace(windowsNewlineRE, '\n')
       }
     }
@@ -869,6 +885,7 @@ function condenseWhitespace(
   if (inPre && tag && currentOptions.isPreTag(tag)) {
     // remove leading newline per html spec
     // https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+    // 根据 HTML 规范删除前导换行符
     const first = nodes[0]
     if (first && first.type === NodeTypes.TEXT) {
       first.content = first.content.replace(/^\r?\n/, '')
@@ -877,6 +894,7 @@ function condenseWhitespace(
   return removedWhitespace ? nodes.filter(Boolean) : nodes
 }
 
+// 判断给定字符串中是否只包含空格、制表符、换行符等空白字符
 function isAllWhitespace(str: string) {
   for (let i = 0; i < str.length; i++) {
     if (!isWhitespace(str.charCodeAt(i))) {
@@ -886,6 +904,7 @@ function isAllWhitespace(str: string) {
   return true
 }
 
+// 于判断给定字符串中是否包含换行符或回车符
 function hasNewlineChar(str: string) {
   for (let i = 0; i < str.length; i++) {
     const c = str.charCodeAt(i)
