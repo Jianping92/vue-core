@@ -1034,6 +1034,7 @@ function reset() {
 export function baseParse(input: string, options?: ParserOptions): RootNode {
   // 初始化
   reset()
+  // 将传入的字符串克隆一个
   currentInput = input
   // 生成一个新默认解析器选项
   currentOptions = extend({}, defaultParserOptions)
@@ -1085,7 +1086,8 @@ export function baseParse(input: string, options?: ParserOptions): RootNode {
 
   // 设置节点，
   const root = (currentRoot = createRoot([], input))
-  // 调用tokenizer.parse(currentInput)函数对输入的字符串进行解析，得到一个初始的语法树
+  // 对输入的字符串进行解析，得到一个初始的语法树
+  // todo 这个tokenizer在什么时候会用到？
   tokenizer.parse(currentInput)
   // 设置语法树的loc属性，将其定位到输入字符串的起始位置到结束位置
   root.loc = getLoc(0, input.length)

@@ -31,6 +31,7 @@ import type { ElementNode, Position } from './ast'
  * Make sure all imports from entities are only used in non-browser branches
  * so that it can be properly treeshaken.
  */
+// entities 这个库通常用于处理 HTML 或 XML 实体编码和解码
 import {
   DecodingMode,
   EntityDecoder,
@@ -225,6 +226,14 @@ export const Sequences = {
   ]), // `</textarea
 }
 
+// 解析HTML/XML文档的解析器
+// 处理：Text（文本）、BeforeTagName（标签名称之前）、
+// InTagName（标签名称中）、BeforeAttrName（属性名称之前）、
+// InAttrName（属性名称中）、BeforeAttrValue（属性值之前）、
+// InAttrValue（属性值中）
+// 处理过程中，解析器会调用回调函数来通知外部代码解析的进度
+// 解析器会生成一个DOM树或者类似的数据结构，用于表示解析后的文档
+// todo 具体的处理逻辑还没看
 export default class Tokenizer {
   /** The current state the tokenizer is in. */
   public state = State.Text
@@ -258,6 +267,7 @@ export default class Tokenizer {
     private readonly stack: ElementNode[],
     private readonly cbs: Callbacks,
   ) {
+    // 如果是非浏览器环境则创建一个 EntityDecoder 实例
     if (!__BROWSER__) {
       this.entityDecoder = new EntityDecoder(htmlDecodeTree, (cp, consumed) =>
         this.emitCodePoint(cp, consumed),
@@ -265,6 +275,7 @@ export default class Tokenizer {
     }
   }
 
+  // 初始化/重置
   public reset(): void {
     this.state = State.Text
     this.mode = ParseMode.BASE
@@ -285,6 +296,7 @@ export default class Tokenizer {
    * processed index, so all the newlines up to this index should have been
    * recorded.
    */
+  // 该函数根据给定的索引值（index），返回对应位置的行号（line）、列号（column）和偏移量（offset）
   public getPos(index: number): Position {
     let line = 1
     let column = index + 1
@@ -303,15 +315,19 @@ export default class Tokenizer {
     }
   }
 
+  // 返回this.buffer字符串在this.index + 1位置上的字符的Unicode编码
   private peek() {
     return this.buffer.charCodeAt(this.index + 1)
   }
 
   private stateText(c: number): void {
+    // 如果 c 是 0x3c 即 "<"
     if (c === CharCodes.Lt) {
       if (this.index > this.sectionStart) {
+        // 执行 cbs 中 ontext 相关逻辑
         this.cbs.ontext(this.sectionStart, this.index)
       }
+      // After <
       this.state = State.BeforeTagName
       this.sectionStart = this.index
     } else if (!__BROWSER__ && c === CharCodes.Amp) {
