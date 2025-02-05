@@ -76,6 +76,7 @@ export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>
 export function reactive<T extends object>(target: T): UnwrapNestedRefs<T>
 export function reactive(target: object) {
   // if trying to observe a readonly proxy, return the readonly version.
+  // 20250205 判断是否为只读，如果是只读直接返回这个object
   if (isReadonly(target)) {
     return target
   }
@@ -122,6 +123,7 @@ export type ShallowReactive<T> = T & { [ShallowReactiveMarker]?: true }
  * @param target - The source object.
  * @see {@link https://vuejs.org/api/reactivity-advanced.html#shallowreactive}
  */
+// 20250205 创建一个浅层相适应，也就是只处理最上面的数据响应式变化，里层的变化不监听
 export function shallowReactive<T extends object>(
   target: T,
 ): ShallowReactive<T> {
@@ -246,6 +248,7 @@ function createReactiveObject(
   collectionHandlers: ProxyHandler<any>,
   proxyMap: WeakMap<Target, any>,
 ) {
+  // 20250205 判断是否为对象，不是对象直接返回
   if (!isObject(target)) {
     if (__DEV__) {
       warn(`value cannot be made reactive: ${String(target)}`)
@@ -254,6 +257,7 @@ function createReactiveObject(
   }
   // target is already a Proxy, return it.
   // exception: calling readonly() on a reactive object
+  // 20250205 已经被代理且没有增加只读状态的直接返回
   if (
     target[ReactiveFlags.RAW] &&
     !(isReadonly && target[ReactiveFlags.IS_REACTIVE])
@@ -261,15 +265,20 @@ function createReactiveObject(
     return target
   }
   // target already has corresponding Proxy
+  // 20250205 如果代理已经存在直接返回代理
   const existingProxy = proxyMap.get(target)
   if (existingProxy) {
     return existingProxy
   }
   // only specific value types can be observed.
+  // 20250205 只有 Object Array Map Set WeakMap WeakSet 类型会被创建代理，如果不是上述类型则直接返回
   const targetType = getTargetType(target)
   if (targetType === TargetType.INVALID) {
     return target
   }
+  // 20250205 创建代理并将代理存储到 proxyMap（本质是WeakMap） 中
+  // 如果是 Map Set WeakMap WeakSet 使用 collectionHandlers
+  // 如果是 Object Array 使用 baseHandlers
   const proxy = new Proxy(
     target,
     targetType === TargetType.COLLECTION ? collectionHandlers : baseHandlers,
@@ -315,6 +324,7 @@ export function isReactive(value: unknown): boolean {
  * @see {@link https://vuejs.org/api/reactivity-utilities.html#isreadonly}
  */
 export function isReadonly(value: unknown): boolean {
+  // 如果value带有__v_isReadonly，表示为只读
   return !!(value && (value as Target)[ReactiveFlags.IS_READONLY])
 }
 

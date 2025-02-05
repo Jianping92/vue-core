@@ -88,6 +88,7 @@ function hasOwnProperty(this: object, key: unknown) {
   return obj.hasOwnProperty(key as string)
 }
 
+// 基础的响应式处理程序：继承官方的 ProxyHandler，在此基础上重写了 get
 class BaseReactiveHandler implements ProxyHandler<Target> {
   constructor(
     protected readonly _isReadonly = false,
@@ -165,6 +166,7 @@ class BaseReactiveHandler implements ProxyHandler<Target> {
   }
 }
 
+// 可变的响应式处理程序：继承 BaseReactiveHandler，在此基础上重写了 set deleteProperty has ownKeys
 class MutableReactiveHandler extends BaseReactiveHandler {
   constructor(isShallow = false) {
     super(false, isShallow)
